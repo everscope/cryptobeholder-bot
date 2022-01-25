@@ -1,16 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CryptoBeholderBot
 {
-    internal class TrackedCoin
+    public class TrackedCoin
     {
-        public string ChatId { get; set; }
-        public string ChatIdAndCoin { get; set; }
-        public CoinGecko.Entities.Response.Coins.CoinList Coin { get; set; }
-        public TraceSettings TraceSet { get; set; }
+        public int ChatId { get; set; }
+        [Key]
+        public string CoinId { get; set; }
+        public string Coin { get; set; }
+        public User User { get; set; }
+
+        public TraceSettings TraceSettings { get; set; }
     }
 }

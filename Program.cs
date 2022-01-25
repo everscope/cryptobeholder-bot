@@ -9,14 +9,9 @@ using CoinGecko;
 
 namespace CryptoBeholderBot {
     public static class Program {
-
-        static string DbUrl = "server = SCAT\\SQLEXPRESS; database = CryptoBeholder; Trusted_Connection=True ; MultipleActiveResultSets = true";
-
         private static CoinGecko.Entities.Response.Simple.SupportedCurrencies [] _vsCurrencies;
         private static CoinGecko.Entities.Response.Coins.CoinList[] _coinsList;
         private static Dictionary<long, string> _usersCommand = new Dictionary<long, string>();
-
-        private static User _userContext;
 
         public static void Main(string[] args)
         {
@@ -27,8 +22,8 @@ namespace CryptoBeholderBot {
         {
             ApiClient.Initialize();
             await InitializeStartData();
-
-            //await ConnectDatabase();
+    
+            
 
             var botClient = new TelegramBotClient("5231381256:AAFolea3xHyRaPPg-Olf1E_hJIOIOEtWQ3A");
 

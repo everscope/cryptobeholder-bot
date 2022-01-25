@@ -1,18 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CryptoBeholderBot
 {
-    internal class User
+    public class User
     {
-        public long ChatId { get; set; }
-
-        public List<TrackedCoin> TrackedCoins { get; set; }
-        //public CoinGecko.Entities.Response.Simple.SupportedCurrencies VsCurrency { get; set; }
-        public string VsCurrency { get; set; }
+        //[Key]
+        //public int ChatId { get; set; }
+        [Key]
+        public int ChatId { get; set; }
+        public string VsCurrency { get; set; } = "usd";
+        public ICollection<TrackedCoin> TrackedCoins { get; set; }
     }
 }
