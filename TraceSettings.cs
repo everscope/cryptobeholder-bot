@@ -16,12 +16,12 @@ namespace CryptoBeholderBot
     public class TraceSettings
     {
         [Key]
-        public string CoinId { get; set; }
+        public int Id { get; set; }
         public decimal? AbsoluteMax { get; set; }
         public decimal? AbsoluteMin { get; set;}
-        public decimal? Persent { get; set; }
-        public string? TracingMode { get; set; }
-        public DateTime? Time { get; set; }
+        public decimal? Persent { get; set; } = 5;
+        public string? TracingMode { get; set; } = TraceMode.OnPriceChageRelatively.ToString();
+        public DateTime? Time { get; set; } = new DateTime(0001, 1, 1, 1, 0, 0);
 
         public TrackedCoin TrackedCoin { get; set; }
     }

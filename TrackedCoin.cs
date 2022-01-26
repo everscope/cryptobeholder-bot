@@ -10,12 +10,13 @@ namespace CryptoBeholderBot
 {
     public class TrackedCoin
     {
-        public int ChatId { get; set; }
         [Key]
-        public string CoinId { get; set; }
+        public int Id { get; set; }
+        [Key]
+        public string TrackedId { get; set; }
         public string Coin { get; set; }
         public User User { get; set; }
 
-        public TraceSettings TraceSettings { get; set; }
+        public TraceSettings TraceSettings{ get; set; } = new TraceSettings();
     }
 }

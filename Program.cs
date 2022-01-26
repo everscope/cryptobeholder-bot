@@ -9,9 +9,11 @@ using CoinGecko;
 
 namespace CryptoBeholderBot {
     public static class Program {
-        private static CoinGecko.Entities.Response.Simple.SupportedCurrencies [] _vsCurrencies;
+
+        private static CoinGecko.Entities.Response.Simple.SupportedCurrencies _vsCurrencies;
         private static CoinGecko.Entities.Response.Coins.CoinList[] _coinsList;
         private static Dictionary<long, string> _usersCommand = new Dictionary<long, string>();
+        private static UserContext _userContext;
 
         public static void Main(string[] args)
         {
@@ -22,8 +24,8 @@ namespace CryptoBeholderBot {
         {
             ApiClient.Initialize();
             await InitializeStartData();
-    
-            
+
+            _userContext = new UserContext();
 
             var botClient = new TelegramBotClient("5231381256:AAFolea3xHyRaPPg-Olf1E_hJIOIOEtWQ3A");
 
@@ -59,7 +61,7 @@ namespace CryptoBeholderBot {
             var vsCurrencyResponce = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.SimpleApiEndPoints.SimpleSupportedVsCurrencies);
             if (vsCurrencyResponce.IsSuccessStatusCode)
             {
-                _vsCurrencies = await vsCurrencyResponce.Content.ReadAsAsync<CoinGecko.Entities.Response.Simple.SupportedCurrencies[]>();
+                _vsCurrencies = await vsCurrencyResponce.Content.ReadAsAsync<CoinGecko.Entities.Response.Simple.SupportedCurrencies>();
             }
         }
 
@@ -87,9 +89,18 @@ namespace CryptoBeholderBot {
                 switch (command)
                 {
                     case "/trace_new":
-                        if(_coinsList.Any(p => p.Name == messageText))
+                        if(_coinsList.Any(p => p.Name.ToLower() == messageText.ToLower()))
                         {
                             messageResponse = $"You are tracking {messageText} with default settings.";
+
+                            _userContext.Users.First(p => p.ChatId == chatId)
+                                .TrackedCoins.Add(new TrackedCoin() { Coin = messageText });
+                            await _userContext.SaveChangesAsync();
+                            //TrackedCoin trackedCoin = new TrackedCoin() { Coin = messageText};
+                            //trackedCoin.TraceSettings = new TraceSettings();
+                            //_userContext.Users.First(p => p.ChatId == (int)chatId)
+                            //    .TrackedCoins.Add(trackedCoin);
+                            //_userContext.SaveChanges();
                         }
                         else
                         {
@@ -107,14 +118,15 @@ namespace CryptoBeholderBot {
                 {
                     case "/start":
                         Console.WriteLine($"bot started in {chatId}");
-                        ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
-                        {
-                        new KeyboardButton[] { "Help me", "Call me ☎️" },
-                        })
-                        {
-                            ResizeKeyboard = true
-                        };
 
+                        messageResponse =
+                            "Hello! This is very usefull bot for tracking crypto currency";
+
+                        if (!_userContext.Users.Any(p => p.ChatId == (int)chatId))
+                        {
+                            _userContext.Users.Add(new User() { ChatId = (int)chatId});
+                            await _userContext.SaveChangesAsync();
+                        }
                         break;
                     case "/trace_new":
                         messageResponse = "Enter coin's name:";
@@ -154,11 +166,5 @@ namespace CryptoBeholderBot {
             Console.WriteLine(ErrorMessage);
             return Task.CompletedTask;
         }
-
-        //static Task ConnectDatabase()
-        //{
-        //    _userContext = new User(options => );
-        //    //throw new NotImplementedException();
-        //}
     }
 }

@@ -13,8 +13,9 @@ namespace CryptoBeholderBot
         //[Key]
         //public int ChatId { get; set; }
         [Key]
+        public int Id { get; set; }
         public int ChatId { get; set; }
         public string VsCurrency { get; set; } = "usd";
-        public ICollection<TrackedCoin> TrackedCoins { get; set; }
+        public ICollection<TrackedCoin> TrackedCoins { get; set; } = new List<TrackedCoin>();
     }
 }

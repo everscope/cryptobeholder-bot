@@ -9,9 +9,6 @@ namespace CryptoBeholderBot
 {
     public class UserContext:DbContext
     {
-        //public DbSet<User> Users { get; set; }
-        //public DbSet<TrackedCoin> TrackedCoins { get; set; }
-        //public DbSet<TraceSettings> TracesSettings { get; set; }
 
         public DbSet<User> Users { get; set; }
         public DbSet<TrackedCoin> TrackedCoins { get; set; }
@@ -28,19 +25,21 @@ namespace CryptoBeholderBot
             modelBuilder.Entity<User>()
                 .HasMany<TrackedCoin>(b => b.TrackedCoins)
                 .WithOne(c => c.User)
-                .HasForeignKey(b => b.ChatId);
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasForeignKey(b => b.Id);
 
             modelBuilder.Entity<TrackedCoin>()
                 .HasOne(b => b.TraceSettings)
                 .WithOne(c => c.TrackedCoin)
-                .HasForeignKey<TraceSettings>(c => c.CoinId);
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasForeignKey<TraceSettings>(c => c.Id);
 
             modelBuilder.Entity<TraceSettings>()
                 .Property(p => p.AbsoluteMax).HasPrecision(12, 10);
             modelBuilder.Entity<TraceSettings>()
                 .Property(p => p.AbsoluteMin).HasPrecision(12, 10);
             modelBuilder.Entity<TraceSettings>()
-                .Property(p => p.Persent).HasPrecision(2, 2);
+                .Property(p => p.Persent).HasPrecision(3, 2);
 
             base.OnModelCreating(modelBuilder);
 

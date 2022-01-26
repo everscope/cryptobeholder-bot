@@ -13,31 +13,32 @@ namespace CryptoBeholderBot.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    ChatId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    ChatId = table.Column<int>(type: "int", nullable: false),
                     VsCurrency = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.ChatId);
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "TrackedCoins",
                 columns: table => new
                 {
-                    CoinId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false),
                     ChatId = table.Column<int>(type: "int", nullable: false),
                     Coin = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TrackedCoins", x => x.CoinId);
+                    table.PrimaryKey("PK_TrackedCoins", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TrackedCoins_Users_ChatId",
-                        column: x => x.ChatId,
+                        name: "FK_TrackedCoins_Users_Id",
+                        column: x => x.Id,
                         principalTable: "Users",
-                        principalColumn: "ChatId",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -45,7 +46,7 @@ namespace CryptoBeholderBot.Migrations
                 name: "TracesSettings",
                 columns: table => new
                 {
-                    CoinId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false),
                     AbsoluteMax = table.Column<decimal>(type: "decimal(12,10)", precision: 12, scale: 10, nullable: true),
                     AbsoluteMin = table.Column<decimal>(type: "decimal(12,10)", precision: 12, scale: 10, nullable: true),
                     Persent = table.Column<decimal>(type: "decimal(2,2)", precision: 2, scale: 2, nullable: true),
@@ -54,19 +55,14 @@ namespace CryptoBeholderBot.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TracesSettings", x => x.CoinId);
+                    table.PrimaryKey("PK_TracesSettings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TracesSettings_TrackedCoins_CoinId",
-                        column: x => x.CoinId,
+                        name: "FK_TracesSettings_TrackedCoins_Id",
+                        column: x => x.Id,
                         principalTable: "TrackedCoins",
-                        principalColumn: "CoinId",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TrackedCoins_ChatId",
-                table: "TrackedCoins",
-                column: "ChatId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

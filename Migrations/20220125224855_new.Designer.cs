@@ -4,6 +4,7 @@ using CryptoBeholderBot;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CryptoBeholderBot.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20220125224855_new")]
+    partial class @new
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,7 +26,7 @@ namespace CryptoBeholderBot.Migrations
 
             modelBuilder.Entity("CryptoBeholderBot.TraceSettings", b =>
                 {
-                    b.Property<int>("TrackedId")
+                    b.Property<int>("Id")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("AbsoluteMax")
@@ -36,8 +38,8 @@ namespace CryptoBeholderBot.Migrations
                         .HasColumnType("decimal(12,10)");
 
                     b.Property<decimal?>("Persent")
-                        .HasPrecision(3, 2)
-                        .HasColumnType("decimal(3,2)");
+                        .HasPrecision(10, 10)
+                        .HasColumnType("decimal(10,10)");
 
                     b.Property<DateTime?>("Time")
                         .HasColumnType("datetime2");
@@ -45,7 +47,7 @@ namespace CryptoBeholderBot.Migrations
                     b.Property<string>("TracingMode")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("TrackedId");
+                    b.HasKey("Id");
 
                     b.ToTable("TracesSettings");
                 });
@@ -53,6 +55,9 @@ namespace CryptoBeholderBot.Migrations
             modelBuilder.Entity("CryptoBeholderBot.TrackedCoin", b =>
                 {
                     b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChatId")
                         .HasColumnType("int");
 
                     b.Property<string>("Coin")
@@ -88,7 +93,7 @@ namespace CryptoBeholderBot.Migrations
                 {
                     b.HasOne("CryptoBeholderBot.TrackedCoin", "TrackedCoin")
                         .WithOne("TraceSettings")
-                        .HasForeignKey("CryptoBeholderBot.TraceSettings", "TrackedId")
+                        .HasForeignKey("CryptoBeholderBot.TraceSettings", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

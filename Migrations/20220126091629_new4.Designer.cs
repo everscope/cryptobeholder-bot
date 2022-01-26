@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CryptoBeholderBot.Migrations
 {
     [DbContext(typeof(UserContext))]
-    [Migration("20220125184713_initial")]
-    partial class initial
+    [Migration("20220126091629_new4")]
+    partial class new4
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -26,8 +26,8 @@ namespace CryptoBeholderBot.Migrations
 
             modelBuilder.Entity("CryptoBeholderBot.TraceSettings", b =>
                 {
-                    b.Property<string>("CoinId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("TrackedId")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("AbsoluteMax")
                         .HasPrecision(12, 10)
@@ -38,8 +38,8 @@ namespace CryptoBeholderBot.Migrations
                         .HasColumnType("decimal(12,10)");
 
                     b.Property<decimal?>("Persent")
-                        .HasPrecision(2, 2)
-                        .HasColumnType("decimal(2,2)");
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
 
                     b.Property<DateTime?>("Time")
                         .HasColumnType("datetime2");
@@ -47,43 +47,41 @@ namespace CryptoBeholderBot.Migrations
                     b.Property<string>("TracingMode")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("CoinId");
+                    b.HasKey("TrackedId");
 
                     b.ToTable("TracesSettings");
                 });
 
             modelBuilder.Entity("CryptoBeholderBot.TrackedCoin", b =>
                 {
-                    b.Property<string>("CoinId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("ChatId")
+                    b.Property<int>("Id")
                         .HasColumnType("int");
 
                     b.Property<string>("Coin")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("CoinId");
-
-                    b.HasIndex("ChatId");
+                    b.HasKey("Id");
 
                     b.ToTable("TrackedCoins");
                 });
 
             modelBuilder.Entity("CryptoBeholderBot.User", b =>
                 {
-                    b.Property<int>("ChatId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChatId"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("ChatId")
+                        .HasColumnType("int");
 
                     b.Property<string>("VsCurrency")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("ChatId");
+                    b.HasKey("Id");
 
                     b.ToTable("Users");
                 });
@@ -92,7 +90,7 @@ namespace CryptoBeholderBot.Migrations
                 {
                     b.HasOne("CryptoBeholderBot.TrackedCoin", "TrackedCoin")
                         .WithOne("TraceSettings")
-                        .HasForeignKey("CryptoBeholderBot.TraceSettings", "CoinId")
+                        .HasForeignKey("CryptoBeholderBot.TraceSettings", "TrackedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -103,7 +101,7 @@ namespace CryptoBeholderBot.Migrations
                 {
                     b.HasOne("CryptoBeholderBot.User", "User")
                         .WithMany("TrackedCoins")
-                        .HasForeignKey("ChatId")
+                        .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
