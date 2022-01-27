@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,15 +9,14 @@ using System.Threading.Tasks;
 
 namespace CryptoBeholderBot
 {
+    [Owned]
     public class TrackedCoin
     {
         [Key]
-        public int Id { get; set; }
-        [Key]
-        public string TrackedId { get; set; }
-        public string Coin { get; set; }
-        public User User { get; set; }
+        public int TrackedId { get; set; }
 
-        public TraceSettings TraceSettings{ get; set; } = new TraceSettings();
+        public string Coin { get; set; }
+        public TraceSettings TraceSettings { get; set; } = new TraceSettings();
+
     }
 }

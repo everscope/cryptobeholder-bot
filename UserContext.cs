@@ -22,24 +22,11 @@ namespace CryptoBeholderBot
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>()
-                .HasMany<TrackedCoin>(b => b.TrackedCoins)
-                .WithOne(c => c.User)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasForeignKey(b => b.Id);
-
-            modelBuilder.Entity<TrackedCoin>()
-                .HasOne(b => b.TraceSettings)
-                .WithOne(c => c.TrackedCoin)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasForeignKey<TraceSettings>(c => c.Id);
-
-            modelBuilder.Entity<TraceSettings>()
-                .Property(p => p.AbsoluteMax).HasPrecision(12, 10);
-            modelBuilder.Entity<TraceSettings>()
-                .Property(p => p.AbsoluteMin).HasPrecision(12, 10);
-            modelBuilder.Entity<TraceSettings>()
-                .Property(p => p.Persent).HasPrecision(3, 2);
+            modelBuilder.Entity<User>().OwnsMany(
+                p => p.TrackedCoins, b =>
+                {
+                    b.OwnsOne(b => b.TraceSettings);;
+                });
 
             base.OnModelCreating(modelBuilder);
 
