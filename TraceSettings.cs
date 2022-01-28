@@ -22,7 +22,7 @@ namespace CryptoBeholderBot
         public decimal? AbsoluteMin { get; set;}
         [Precision(3, 2)]
         public decimal? Persent { get; set; } = 5;
-        public TraceMode? TracingMode { get; set; } = TraceMode.OnPriceChageRelatively;
+        public TraceMode TracingMode { get; set; } = TraceMode.OnPriceChageRelatively;
         public DateTime? Time { get; set; } = new DateTime(0001, 1, 1, 1, 0, 0);
     }
 
