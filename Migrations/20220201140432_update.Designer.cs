@@ -4,6 +4,7 @@ using CryptoBeholderBot;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CryptoBeholderBot.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20220201140432_update")]
+    partial class update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,28 +79,16 @@ namespace CryptoBeholderBot.Migrations
                                         .HasPrecision(18, 3)
                                         .HasColumnType("decimal(18,3)");
 
-                                    b2.Property<decimal>("AbsoluteMin")
+                                    b2.Property<decimal?>("AbsoluteMin")
                                         .HasPrecision(18, 3)
                                         .HasColumnType("decimal(18,3)");
 
                                     b2.Property<bool>("IsNotificationSent")
                                         .HasColumnType("bit");
 
-                                    b2.Property<bool>("MaxIsReached")
-                                        .HasColumnType("bit");
-
-                                    b2.Property<bool>("MinIsReached")
-                                        .HasColumnType("bit");
-
                                     b2.Property<decimal?>("Persent")
-                                        .HasPrecision(5, 2)
-                                        .HasColumnType("decimal(5,2)");
-
-                                    b2.Property<bool>("PersentNegativeIsReached")
-                                        .HasColumnType("bit");
-
-                                    b2.Property<bool>("PersentPositiveIsReached")
-                                        .HasColumnType("bit");
+                                        .HasPrecision(3, 2)
+                                        .HasColumnType("decimal(3,2)");
 
                                     b2.Property<DateTime>("Time")
                                         .HasColumnType("datetime2");

@@ -11,20 +11,12 @@ using System.Globalization;
 namespace CryptoBeholderBot {
     public static class Program {
 
-        private static CoinGecko.Entities.Response.Simple.SupportedCurrencies _vsCurrencies;
-        private static CoinGecko.Entities.Response.Coins.CoinList[] _coinsList;
         private static Dictionary<long, string> _usersCommand = new Dictionary<long, string>();
         private static Dictionary<long, string> _traces = new Dictionary<long, string>();
 
-        // 0 - trace mode
-        // 1 - answer for 0
-        // 2 - max/min percents
-        // 3 - answer for 2
-        // 4 - time
-        // 5 - answer for 4
         private static Dictionary<long, int> _traceStage = new Dictionary<long, int>();
 
-        private static UserContext _userContext;
+        public static UserContext _userContext;
 
         public static void Main(string[] args)
         {
@@ -34,13 +26,14 @@ namespace CryptoBeholderBot {
         private static async Task MainAsync()
         {
             ApiClient.Initialize();
-            await InitializeStartData();
 
             _userContext = new UserContext();
 
             var botClient = new TelegramBotClient("5231381256:AAFolea3xHyRaPPg-Olf1E_hJIOIOEtWQ3A");
 
             using var cts = new CancellationTokenSource();
+
+            await Tracer.Start(botClient, cts);
 
             var receiverOptions = new ReceiverOptions
             {
@@ -56,24 +49,10 @@ namespace CryptoBeholderBot {
             var me = await botClient.GetMeAsync();
 
             Console.WriteLine($"Start listening for @{me.Username}");
+
             Console.ReadLine();
 
             cts.Cancel();
-        }
-
-        async static Task InitializeStartData()
-        {
-            var coinListResponse = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.CoinsApiEndPoints.CoinList);
-            if (coinListResponse.IsSuccessStatusCode)
-            {
-                _coinsList = await coinListResponse.Content.ReadAsAsync<CoinGecko.Entities.Response.Coins.CoinList[]>();
-            }
-
-            var vsCurrencyResponce = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.SimpleApiEndPoints.SimpleSupportedVsCurrencies);
-            if (vsCurrencyResponce.IsSuccessStatusCode)
-            {
-                _vsCurrencies = await vsCurrencyResponce.Content.ReadAsAsync<CoinGecko.Entities.Response.Simple.SupportedCurrencies>();
-            }
         }
 
         async static Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -124,7 +103,7 @@ namespace CryptoBeholderBot {
                 switch (command)
                 {
                     case "/trace_new":
-                        if (_coinsList.Any(p => p.Name.ToLower() == messageText.ToLower()))
+                        if (Tracer.CoinsList.Any(p => p.Name.ToLower() == messageText.ToLower()))
                         {
                             if (_userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                 .Any(p => p.Coin.ToLower() == messageText.ToLower()))
@@ -171,10 +150,10 @@ namespace CryptoBeholderBot {
                         }
                         break;
                     case "/change_vs_currency":
-                        if (_vsCurrencies.Contains(messageText.ToLower()))
+                        if (Tracer.VsCurrencies.Contains(messageText.ToLower()))
                         {
                             messageResponse[0] = $"Your vs currency has been changed to {messageText}";
-                            _userContext.Users.First(p => p.ChatId == chatId).VsCurrency = messageText;
+                            _userContext.Users.First(p => p.ChatId == chatId).VsCurrency = messageText.ToLower();
                         }
                         else
                         {
@@ -261,6 +240,12 @@ namespace CryptoBeholderBot {
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                             .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                             .AbsoluteMax = Convert.ToDecimal(priceString[1]);
+                                        _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .MaxIsReached = false;
+                                        _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .MinIsReached = false;
                                         messageResponse[1] = "All coin settings are set now";
                                     }
                                     else
@@ -268,6 +253,7 @@ namespace CryptoBeholderBot {
                                         messageResponse[0] = "Something is wrong with your numbers.";
                                         _traceStage.Remove(chatId);
                                         _traces.Remove(chatId);
+                                        break;
                                     }
                                 }
                                 catch
@@ -285,10 +271,16 @@ namespace CryptoBeholderBot {
                                     _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                             .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                             .AbsoluteMax = Convert.ToDecimal(messageText);
-                                    _traceStage[chatId] = 2;
-                                    messageResponse[1] = "Select time, which will be used to detect how much price changed" +
-                                        " since that time in percents." +
-                                        "Time should look like this: 1:45 (hours:minutes, max is 24 hours)";
+                                    _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                                          .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                          .PersentNegativeIsReached = false;
+                                    _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                                        .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                        .PersentPositiveIsReached = false;
+                                    _traceStage.Remove(chatId);
+                                    _traces.Remove(chatId);
+                                    messageResponse[1] = "All coin settings are set now";
+                                    break;
                                 }
                                 catch
                                 {
@@ -316,6 +308,11 @@ namespace CryptoBeholderBot {
                                         _traces.Remove(chatId);
                                         messageResponse[0] = "Your time period is set";
                                         messageResponse[1] = "All coin settings are set now";
+
+                                        _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .Timestamp = DateTime.Now;
+
                                         break;
                                     }
                                     else
@@ -338,46 +335,12 @@ namespace CryptoBeholderBot {
                                 break;
                         }
                         break;
-                    case 2:
-                        try
-                        {
-                            string[] dateString = messageText.Split(':');
-                            int hours = Convert.ToInt32(dateString[0]);
-                            int minutes = Convert.ToInt32(dateString[1]);
-
-                            if (hours < 24 && minutes < 60)
-                            {
-                                _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                    .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
-                                    .Time = new DateTime(0001, 01, 01, hours, minutes, 0);
-                                _traceStage.Remove(chatId);
-                                _traces.Remove(chatId);
-                                messageResponse[0] = "Your time period is set";
-                                messageResponse[1] = "All coin settings are set now";
-                                break;
-                            }
-                            else
-                            {
-                                messageResponse[0] = "Something is wrong with your time";
-                                _traceStage.Remove(chatId);
-                                _traces.Remove(chatId);
-                            }
-
-                        }
-                        catch
-                        {
-                            messageResponse[0] = "Something is wrong with your time";
-                            _traceStage.Remove(chatId);
-                            _traces.Remove(chatId);
-                            break;
-                        }
-
-                        break;
                     default:
                         break;
                 }
+                _userContext.SaveChanges();
 
-            }    
+            }
             else
             {
                 switch (messageText)
@@ -405,7 +368,7 @@ namespace CryptoBeholderBot {
                         break;
                     case "/change_vs_currency":
                         messageResponse[0] = "Here is a list of allowed currencies. Sellect one of them for price displaying: \n";
-                        foreach (string currency in _vsCurrencies)
+                        foreach (string currency in Tracer.VsCurrencies)
                         {
                             messageResponse[0] += "- " + currency + "\n"; 
                         }
@@ -511,5 +474,15 @@ namespace CryptoBeholderBot {
             Console.WriteLine(ErrorMessage);
             return Task.CompletedTask;
         }
+
+        //public static async Task SendMessage(int chatId, TelegramBotClient botClient,
+        //    CancellationToken cancellationToken, string text, ReplyKeyboardMarkup? keyboardMarkup = null)
+        //{
+        //    Message sentSecondMessage = await botClient.SendTextMessageAsync(
+        //        chatId: chatId,
+        //        text: text,
+        //        replyMarkup: keyboardMarkup,
+        //        cancellationToken: cancellationToken);
+        //}
     }
 }

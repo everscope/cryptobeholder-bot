@@ -4,6 +4,7 @@ using CryptoBeholderBot;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CryptoBeholderBot.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20220131191543_en")]
+    partial class en
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,36 +76,21 @@ namespace CryptoBeholderBot.Migrations
                                         .HasColumnType("int");
 
                                     b2.Property<decimal?>("AbsoluteMax")
-                                        .HasPrecision(18, 3)
-                                        .HasColumnType("decimal(18,3)");
+                                        .HasPrecision(12, 10)
+                                        .HasColumnType("decimal(12,10)");
 
-                                    b2.Property<decimal>("AbsoluteMin")
-                                        .HasPrecision(18, 3)
-                                        .HasColumnType("decimal(18,3)");
-
-                                    b2.Property<bool>("IsNotificationSent")
-                                        .HasColumnType("bit");
-
-                                    b2.Property<bool>("MaxIsReached")
-                                        .HasColumnType("bit");
-
-                                    b2.Property<bool>("MinIsReached")
-                                        .HasColumnType("bit");
+                                    b2.Property<decimal?>("AbsoluteMin")
+                                        .HasPrecision(12, 10)
+                                        .HasColumnType("decimal(12,10)");
 
                                     b2.Property<decimal?>("Persent")
-                                        .HasPrecision(5, 2)
-                                        .HasColumnType("decimal(5,2)");
+                                        .HasPrecision(3, 2)
+                                        .HasColumnType("decimal(3,2)");
 
-                                    b2.Property<bool>("PersentNegativeIsReached")
-                                        .HasColumnType("bit");
-
-                                    b2.Property<bool>("PersentPositiveIsReached")
-                                        .HasColumnType("bit");
-
-                                    b2.Property<DateTime>("Time")
+                                    b2.Property<DateTime?>("Time")
                                         .HasColumnType("datetime2");
 
-                                    b2.Property<DateTime>("Timestamp")
+                                    b2.Property<DateTime?>("Timestamp")
                                         .HasColumnType("datetime2");
 
                                     b2.Property<int>("TracingMode")

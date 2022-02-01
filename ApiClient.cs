@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 
 namespace CryptoBeholderBot
 {
-    public static class ApiClient
+    public class ApiClient
     {
         public static HttpClient Client;
 
