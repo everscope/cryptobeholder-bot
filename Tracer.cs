@@ -11,8 +11,6 @@ namespace CryptoBeholderBot
 {
     internal class Tracer
     {
-        //public static CoinGecko.Entities.Response.Coins.CoinMarkets[] CoinsData { get; private set; }
-        //public static CoinGecko.Entities.Response.Simple.SupportedCurrencies VsCurrencies { get; private set; }
         public static CoinGecko.Entities.Response.Coins.CoinList[] CoinsList { get; private set; }
         public static List<CoinGecko.Entities.Response.Coins.CoinMarkets[]> CoinsData { get; private set; } =
                                                 new List<CoinGecko.Entities.Response.Coins.CoinMarkets[]>();
@@ -26,36 +24,21 @@ namespace CryptoBeholderBot
             "btc"
         };
 
-        private static UserContext _userContext;
-            
-        //public delegate void OnTraced();
-
-        //public static event OnTraced OnTracedAbsolute;
-        //public static event OnTraced OnTracedRelative;
-        //public static event OnTraced OnTracedTime;
-
+        private static readonly string _coinsDataRequestArgs = "&order=market_cap_desc&per_page=250&page=1&sparkline=false";
 
         public static async Task Start(TelegramBotClient botClient, CancellationTokenSource cancellationTokenSource)
         {
-            //_userContext = new UserContext();
             var coinListResponse = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.CoinsApiEndPoints.CoinList);
             if (coinListResponse.IsSuccessStatusCode)
             {
                 CoinsList = await coinListResponse.Content.ReadAsAsync<CoinGecko.Entities.Response.Coins.CoinList[]>();
             }
 
-            //var coinsDataResponse = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.CoinsApiEndPoints.CoinMarkets
-            //                            + "?vs_currency=usd&page=1&sparkline=false");
-            //if (coinsDataResponse.IsSuccessStatusCode)
-            //{
-            //    CoinsData = await coinsDataResponse.Content.ReadAsAsync<CoinGecko.Entities.Response.Coins.CoinMarkets []>();
-            //}
-
             foreach (string currency in VsCurrencies)
             {
 
                 var coinsDataResponse = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.CoinsApiEndPoints.CoinMarkets
-                           + "?vs_currency=" + currency + "&order=market_cap_desc&per_page=250&page=1&sparkline=false");
+                           + "?vs_currency=" + currency + _coinsDataRequestArgs);
 
                 if (coinsDataResponse.IsSuccessStatusCode)
                 {
@@ -65,7 +48,7 @@ namespace CryptoBeholderBot
 
             new Thread(() =>
             {
-                Trace();
+                TracePrice();
             }).Start();
 
             new Thread(() =>
@@ -74,9 +57,7 @@ namespace CryptoBeholderBot
             }).Start();
         }
 
-
-
-        private static async void Trace()
+        private static async void TracePrice()
         {
 
             while (CoinsData.Count < VsCurrencies.Count)
@@ -84,170 +65,197 @@ namespace CryptoBeholderBot
                 Thread.Sleep(1000);
             }
 
-            //while (true)
-            //{
+            while (true)
+            {
 
-            //    int i = 0;
-            //    foreach (string currency in VsCurrencies)
-            //    {
-            //        var coinsDataResponse = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.CoinsApiEndPoints.CoinMarkets
-            //                   + "?vs_currency=" + currency + "&order=market_cap_desc&per_page=250&page=1&sparkline=false");
+                int i = 0;
+                foreach (string currency in VsCurrencies)
+                {
+                    var coinsDataResponse = await ApiClient.Client.GetAsync(CoinGecko.ApiEndPoints.CoinsApiEndPoints.CoinMarkets
+                               + "?vs_currency=" + currency + _coinsDataRequestArgs);
 
-            //        if (coinsDataResponse.IsSuccessStatusCode)
-            //        {
-            //            CoinsData[i] = await coinsDataResponse.Content.ReadAsAsync<CoinGecko.Entities.Response.Coins.CoinMarkets[]>();
-            //        }
+                    if (coinsDataResponse.IsSuccessStatusCode)
+                    {
+                        CoinsData[i] = await coinsDataResponse.Content.ReadAsAsync<CoinGecko.Entities.Response.Coins.CoinMarkets[]>();
+                    }
 
-            //        i++;
-            //    }
+                    i++;
+                }
 
-            //    Thread.Sleep(1000);
-            //}
+                Thread.Sleep(1000);
+            }
         }
 
         private static async void TrackChanges(TelegramBotClient botClient, CancellationTokenSource cancellationTokenSource)
         {
-            while (/*_userContext == null *//*&&*/ CoinsData.Count < VsCurrencies.Count)
+            while (CoinsData.Count < VsCurrencies.Count)
             {
                 Thread.Sleep(1200);
             }
 
-            string? message = null;
+            string? message;
 
             while (true)
             {
-                using (new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
+                using (var data = new UserContext())
                 {
-                    IsolationLevel = System.Transactions.IsolationLevel.Snapshot
-                }))
-                {
-                    using (var data = new UserContext())
+                    foreach (User user in data.Users)
                     {
-                        foreach (User user in data.Users)
+                        int index = VsCurrencies.FindIndex(p => p.Contains(user.VsCurrency));
+                        if (index == -1)
                         {
-                            int index = VsCurrencies.FindIndex(p => p.Contains(user.VsCurrency));
-                            if (index == -1)
+                            break;
+                        }
+                        foreach (TrackedCoin coin in user.TrackedCoins)
+                        {
+                            message = null;
+                            switch (coin.TraceSettings.TracingMode)
                             {
-                                break;
+                                case TraceMode.OnPriceChageAbsolutely:
+                                    if (CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice > coin.TraceSettings.AbsoluteMax
+                                        && !coin.TraceSettings.MaxIsReached)
+                                    {
+                                        message = $"Attention! \n Your tracked coin {coin.Coin} reached max or min price you selected. \n" +
+                                            $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}";
+
+                                        UserContext userUpdate = new UserContext();
+
+                                        userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                            .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                            .MaxIsReached = true;
+                                        userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                            .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                            .MinIsReached = true;
+                                        await userUpdate.SaveChangesAsync();
+                                    }
+                                    else if (CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice < coin.TraceSettings.AbsoluteMin
+                                        && !coin.TraceSettings.MinIsReached)
+                                    {
+                                        message = $"Attention! \n Your tracked coin {coin.Coin} reached max or min price you selected. \n" +
+                                            $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}";
+
+                                        UserContext userUpdate = new UserContext();
+
+                                        userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                            .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                            .MaxIsReached = false;
+                                        userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                            .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                            .MinIsReached = true;
+                                        await userUpdate.SaveChangesAsync();
+                                    }
+                                    break;
+                                case TraceMode.OnPriceChageRelatively:
+                                    if (Math.Abs(Convert.ToDecimal(CoinsData[index].First(p => p.Name == coin.Coin)?.PriceChangePercentage24H))
+                                        >= Math.Abs(Convert.ToDecimal(coin.TraceSettings.Persent)))
+                                    {
+                                        if (CoinsData[index].First(p => p.Name == coin.Coin).PriceChangePercentage24H >= 0
+                                            && !coin.TraceSettings.PersentPositiveIsReached)
+                                        {
+                                            message = $"Attention! \n Your tracked coin {coin.Coin} reached the percentage you selected. \n" +
+                                            $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}, " +
+                                            $"that is {CoinsData[index].First(p => p.Name == coin.Coin).PriceChange24H} % change.";
+
+                                            UserContext userUpdate = new UserContext();
+
+                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                                .PersentPositiveIsReached = true;
+                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                                .PersentNegativeIsReached = false;
+                                            await userUpdate.SaveChangesAsync();
+                                        }
+                                        else if (CoinsData[index].First(p => p.Name == coin.Coin).PriceChangePercentage24H < 0
+                                            && !coin.TraceSettings.PersentNegativeIsReached)
+                                        {
+                                            message = $"Attention! \n Your tracked coin {coin.Coin} reached the percentage you selected. \n" +
+                                            $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}, " +
+                                            $"that is {CoinsData[index].First(p => p.Name == coin.Coin).PriceChange24H} % change.";
+
+                                            UserContext userUpdate = new UserContext();
+
+                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                                .PersentPositiveIsReached = false;
+                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                                .PersentNegativeIsReached = true;
+                                            await userUpdate.SaveChangesAsync();
+                                        }
+                                    }
+                                    break;
+                                case TraceMode.AfterTime:
+                                    if (DateTime.Now.TimeOfDay - coin.TraceSettings.Timestamp.TimeOfDay > coin.TraceSettings.Time.TimeOfDay)
+                                    {
+                                        message = $"Attention! \n Your tracked coin {coin.Coin} is now " +
+                                            $"{CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}.";
+
+                                        UserContext userUpdate = new UserContext();
+
+                                        userUpdate.Users.First(p => p.ChatId == user.ChatId)
+                                            .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
+                                            .Timestamp = DateTime.Now;
+                                        await userUpdate.SaveChangesAsync();
+
+                                    }
+                                    break;
+                                default:
+                                    break;
                             }
-                            foreach (TrackedCoin coin in user.TrackedCoins)
+
+                            if (message != null)
                             {
-                                message = null;
-                                switch (coin.TraceSettings.TracingMode)
-                                {
-                                    case TraceMode.OnPriceChageAbsolutely:
-                                        //TracedChangeHandler(user.ChatId, coin.Coin, coin.TraceSettings.AbsoluteMax, coin.TraceSettings.AbsoluteMin);
-                                        if (CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice > coin.TraceSettings.AbsoluteMax
-                                            && !coin.TraceSettings.MaxIsReached)
-                                        /*|| CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice < coin.TraceSettings.AbsoluteMin*/
-                                        {
-                                            message = $"Attention! \n Your tracked coin {coin.Coin} reached max or min price you selected. \n" +
-                                                $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}";
-
-                                            UserContext userUpdate = new UserContext();
-
-                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                .MaxIsReached = true;
-                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                .MinIsReached = true;
-                                            await userUpdate.SaveChangesAsync();
-                                        }
-                                        else if (CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice < coin.TraceSettings.AbsoluteMin
-                                            && !coin.TraceSettings.MinIsReached)
-                                        {
-                                            message = $"Attention! \n Your tracked coin {coin.Coin} reached max or min price you selected. \n" +
-                                                $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}";
-
-                                            UserContext userUpdate = new UserContext();
-
-                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                .MaxIsReached = false;
-                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                .MinIsReached = true;
-                                            await userUpdate.SaveChangesAsync();
-                                        }
-                                        break;
-                                    case TraceMode.OnPriceChageRelatively:
-                                        if (Math.Abs(Convert.ToDecimal(CoinsData[index].First(p => p.Name == coin.Coin).PriceChangePercentage24H))
-                                            >= Math.Abs(Convert.ToDecimal(coin.TraceSettings.Persent)))
-                                        {
-                                            if (CoinsData[index].First(p => p.Name == coin.Coin).PriceChangePercentage24H >= 0
-                                                && !coin.TraceSettings.PersentPositiveIsReached)
-                                            {
-                                                message = $"Attention! \n Your tracked coin {coin.Coin} reached the percentage you selected. \n" +
-                                                $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}, " +
-                                                $"that is {CoinsData[index].First(p => p.Name == coin.Coin).PriceChange24H} % change.";
-
-                                                UserContext userUpdate = new UserContext();
-
-                                                userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                    .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                    .PersentPositiveIsReached = true;
-                                                userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                    .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                    .PersentNegativeIsReached = false;
-                                                await userUpdate.SaveChangesAsync();
-                                            }
-                                            else if (CoinsData[index].First(p => p.Name == coin.Coin).PriceChangePercentage24H < 0
-                                                && !coin.TraceSettings.PersentNegativeIsReached)
-                                            {
-                                                message = $"Attention! \n Your tracked coin {coin.Coin} reached the percentage you selected. \n" +
-                                                $"Now it's {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}, " +
-                                                $"that is {CoinsData[index].First(p => p.Name == coin.Coin).PriceChange24H} % change.";
-
-                                                UserContext userUpdate = new UserContext();
-
-                                                userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                    .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                    .PersentPositiveIsReached = false;
-                                                userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                    .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                    .PersentNegativeIsReached = true;
-                                                await userUpdate.SaveChangesAsync();
-                                            }
-                                        }
-                                        break;
-                                    case TraceMode.AfterTime:
-                                        if (DateTime.Now.TimeOfDay - coin.TraceSettings.Timestamp.TimeOfDay > coin.TraceSettings.Time.TimeOfDay)
-                                        {
-                                            message = $"Attention! \n Your tracked coin {coin.Coin} is now " +
-                                                $"{CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency}.";
-
-                                            //Program._userContext.Users.First(p => p.ChatId == user.ChatId)
-                                            //    .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                            //    .Timestamp = DateTime.Now;
-                                            //await Program._userContext.SaveChangesAsync();
-
-                                            UserContext userUpdate = new UserContext();
-
-                                            userUpdate.Users.First(p => p.ChatId == user.ChatId)
-                                                .TrackedCoins.First(p => p.Coin == coin.Coin).TraceSettings
-                                                .Timestamp = DateTime.Now;
-                                            await userUpdate.SaveChangesAsync();
-
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
-
-                                if (message != null)
-                                {
-                                    Message sentSecondMessage = await botClient.SendTextMessageAsync(
-                                        chatId: user.ChatId,
-                                        text: message,
-                                        cancellationToken: cancellationTokenSource.Token);
-                                }
+                                Message sentSecondMessage = await botClient.SendTextMessageAsync(
+                                    chatId: user.ChatId,
+                                    text: message,
+                                    cancellationToken: cancellationTokenSource.Token);
                             }
                         }
                     }
                 }
-                
+            }
+        }
+
+        public static async void CheckUserCoins(int chatId, ITelegramBotClient botClient, CancellationToken cancellationToken)
+        {
+            int a = VsCurrencies.Count;
+            int v = CoinsData.Count;
+            if (VsCurrencies.Count < CoinsData.Count)
+            {
+                Message sentSecondMessage = await botClient.SendTextMessageAsync(
+                     chatId: chatId,
+                     text: "Please, wait till database will be initalizated.",
+                     cancellationToken: cancellationToken);
+            }
+            else
+            {
+                using (var data = new UserContext())
+                {
+                    var user = data.Users.First(p => p.ChatId == chatId);
+                    string message = "Info: \n";
+                    int index = VsCurrencies.FindIndex(p => p.Contains(user.VsCurrency));
+
+                    foreach (TrackedCoin coin in data.Users.First(p => p.ChatId == chatId).TrackedCoins)
+                    {
+                        try 
+                        {
+                            message += $"- {coin.Coin}: {CoinsData[index].First(p => p.Name == coin.Coin).CurrentPrice} in {user.VsCurrency} \n";
+                        }
+                        catch
+                        {
+                            message = "Coin data isn't loaded yet";
+                        }
+                        
+                    }
+
+                    Message sentSecondMessage = await botClient.SendTextMessageAsync(
+                            chatId: chatId,
+                            text: message,
+                            cancellationToken: cancellationToken);
+                }
             }
         }
     }
+
 }

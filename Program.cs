@@ -16,7 +16,7 @@ namespace CryptoBeholderBot {
 
         private static Dictionary<long, int> _traceStage = new Dictionary<long, int>();
 
-        public static UserContext _userContext;
+        private static UserContext _userContext;
 
         public static void Main(string[] args)
         {
@@ -98,9 +98,7 @@ namespace CryptoBeholderBot {
 
             if (_usersCommand.ContainsKey(chatId))
             {
-                string command = _usersCommand[chatId];
-
-                switch (command)
+                switch (_usersCommand[chatId])
                 {
                     case "/trace_new":
                         if (Tracer.CoinsList.Any(p => p.Name.ToLower() == messageText.ToLower()))
@@ -109,16 +107,20 @@ namespace CryptoBeholderBot {
                                 .Any(p => p.Coin.ToLower() == messageText.ToLower()))
                             {
                                 messageResponse[0] = "You are already tracking this coin.";
-                                break;
                             }
-                            messageResponse[0] = $"You are tracking {messageText} with default settings.";
+                            else
+                            {
+                                messageResponse[0] = $"You are tracking {messageText} with default settings.";
 
-                            _userContext.Users.First(p => p.ChatId == chatId)
-                                .TrackedCoins.Add(new TrackedCoin() { Coin = messageText });
+                                _userContext.Users.First(p => p.ChatId == chatId)
+                                    .TrackedCoins.Add(new TrackedCoin() { Coin = Tracer.CoinsList.First(
+                                        p => p.Name.ToLower() == messageText.ToLower()).Name});
+                            }
+
                         }
                         else
                         {
-                            messageResponse[0] = $"There is no such coin";
+                            messageResponse[0] = $"There is no such coin.";
                         }
                         break;
                     case "/delete_trace":
@@ -134,10 +136,11 @@ namespace CryptoBeholderBot {
                     case "/edit_trace":
                         if (_userContext.Users.First(p => p.ChatId == chatId).TrackedCoins.Any(p => p.Coin.ToLower() == messageText.ToLower()))
                         {
-                            _traces.Add(chatId, messageText);
+                            _traces.Add(chatId, _userContext.Users.First(p => p.ChatId == chatId)
+                                                .TrackedCoins.First(p => p.Coin.ToLower() == messageText.ToLower()).Coin);
                             _traceStage.Add(chatId, 0);
 
-                            messageResponse[0] = "Select trace mode. Use /help for more info";
+                            messageResponse[0] = "Select trace mode. Use /help for more info.";
                             keyboardMarkup[0] = new(new[]{
                                 new KeyboardButton [] { "On price chage absolutely" },
                                 new KeyboardButton [] { "On price chage relatively" },
@@ -152,7 +155,7 @@ namespace CryptoBeholderBot {
                     case "/change_vs_currency":
                         if (Tracer.VsCurrencies.Contains(messageText.ToLower()))
                         {
-                            messageResponse[0] = $"Your vs currency has been changed to {messageText}";
+                            messageResponse[0] = $"Your vs currency has been changed to {messageText}.";
                             _userContext.Users.First(p => p.ChatId == chatId).VsCurrency = messageText.ToLower();
                         }
                         else
@@ -181,17 +184,17 @@ namespace CryptoBeholderBot {
                         {
                             case "On price chage absolutely":
                                 _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                    .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                    .First(p => p.Coin == trace).TraceSettings
                                     .TracingMode = TraceMode.OnPriceChageAbsolutely;
                                 break;
                             case "On price chage relatively":
                                 _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                    .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                    .First(p => p.Coin == trace).TraceSettings
                                     .TracingMode = TraceMode.OnPriceChageRelatively;
                                 break;
                             case "After time":
                                 _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                    .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                    .First(p => p.Coin == trace).TraceSettings
                                     .TracingMode = TraceMode.AfterTime;
                                 break;
                             default:
@@ -203,21 +206,21 @@ namespace CryptoBeholderBot {
 
                         traceMode = _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                     .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
-                                    .TracingMode; ;
+                                    .TracingMode;
 
                         switch (traceMode)
                         {
                             case TraceMode.OnPriceChageAbsolutely:
                                 messageResponse[1] = "Select price limits after achiving which you will get notification. " +
-                                    "Max and min price should look like this: 14000-54000";
+                                    "Max and min price should look like this: 14000-54000.";
                                 break;
                             case TraceMode.OnPriceChageRelatively:
                                 messageResponse[1] = "Select price limit in percentage after achiving which you will get notification:" +
-                                   "Persentage should look like this: 25,58";
+                                   "Persentage should look like this: 25,58.";
                                 break;
                             case TraceMode.AfterTime:
                                 messageResponse[1] = "Select time period (in hours) after which you will get notification. " +
-                                    "Time should look like this: 1:45 (hours:minutes, max is 24 hours)";
+                                    "Time should look like this: 1:45 (hours:minutes, max is 24 hours).";
                                 break;
                             default:
                                 break;
@@ -230,44 +233,40 @@ namespace CryptoBeholderBot {
                                 try
                                 {
                                     string[] priceString = messageText.Split('-');
-                                    if (priceString.Length == 2 && Convert.ToDecimal(priceString[0]) < Convert.ToDecimal(priceString[1]))
+                                    if (Convert.ToDecimal(priceString[0]) < Convert.ToDecimal(priceString[1]))
                                     {
 
-                                        messageResponse[0] = "Your min and max price is set";
+                                        messageResponse[0] = "Your min and max price is set.";
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .First(p => p.Coin == trace).TraceSettings
                                             .AbsoluteMin = Convert.ToDecimal(priceString[0]);
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .First(p => p.Coin == trace).TraceSettings
                                             .AbsoluteMax = Convert.ToDecimal(priceString[1]);
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .First(p => p.Coin == trace).TraceSettings
                                             .MaxIsReached = false;
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                            .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
+                                            .First(p => p.Coin == trace).TraceSettings
                                             .MinIsReached = false;
-                                        messageResponse[1] = "All coin settings are set now";
+                                        messageResponse[1] = "All coin settings are set now.";
                                     }
                                     else
                                     {
                                         messageResponse[0] = "Something is wrong with your numbers.";
-                                        _traceStage.Remove(chatId);
-                                        _traces.Remove(chatId);
-                                        break;
                                     }
                                 }
                                 catch
                                 {
                                     messageResponse[0] = "Something is wrong with your numbers.";
-                                    _traceStage.Remove(chatId);
-                                    _traces.Remove(chatId);
-                                    break;
                                 }
+                                _traceStage.Remove(chatId);
+                                _traces.Remove(chatId);
                                 break;
                             case TraceMode.OnPriceChageRelatively:
                                 try
                                 {
-                                    messageResponse[0] = "Your percentage is set";
+                                    messageResponse[0] = "Your percentage is set.";
                                     _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                             .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                             .AbsoluteMax = Convert.ToDecimal(messageText);
@@ -277,18 +276,15 @@ namespace CryptoBeholderBot {
                                     _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                         .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                         .PersentPositiveIsReached = false;
-                                    _traceStage.Remove(chatId);
-                                    _traces.Remove(chatId);
-                                    messageResponse[1] = "All coin settings are set now";
-                                    break;
+                                    messageResponse[1] = "All coin settings are set now.";
                                 }
                                 catch
                                 {
                                     messageResponse[0] = "Something is wrong with you percents.";
-                                    _traceStage.Remove(chatId);
-                                    _traces.Remove(chatId);
-                                    break;
+
                                 }
+                                _traceStage.Remove(chatId);
+                                _traces.Remove(chatId);
                                 break;
                             case TraceMode.AfterTime:
                                 try
@@ -304,32 +300,26 @@ namespace CryptoBeholderBot {
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                             .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                             .Time = new DateTime(0001, 01, 01, hours, minutes, 0);
-                                        _traceStage.Remove(chatId);
-                                        _traces.Remove(chatId);
-                                        messageResponse[0] = "Your time period is set";
-                                        messageResponse[1] = "All coin settings are set now";
+                                        messageResponse[0] = "Your time period is set.";
+                                        messageResponse[1] = "All coin settings are set now.";
 
                                         _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                             .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                             .Timestamp = DateTime.Now;
-
-                                        break;
                                     }
                                     else
                                     {
-                                        messageResponse[0] = "Something is wrong with your time";
-                                        _traceStage.Remove(chatId);
-                                        _traces.Remove(chatId);
+                                        messageResponse[0] = "Something is wrong with your time.";
+
                                     }
 
                                 }
                                 catch
                                 {
-                                    messageResponse[0] = "Something is wrong with your time";
-                                    _traceStage.Remove(chatId);
-                                    _traces.Remove(chatId);
-                                    break;
+                                    messageResponse[0] = "Something is wrong with your time.";
                                 }
+                                _traceStage.Remove(chatId);
+                                _traces.Remove(chatId);
                                 break;
                             default:
                                 break;
@@ -349,7 +339,7 @@ namespace CryptoBeholderBot {
                         Console.WriteLine($"bot started in {chatId}");
 
                         messageResponse[0] =
-                            "Hello! This is very usefull bot for tracking crypto currency";
+                            "Hello! This is very usefull bot for tracking crypto currency. To learn how to use it, print '/help'";
 
                         if (!_userContext.Users.Any(p => p.ChatId == (int)chatId))
                         {
@@ -374,10 +364,13 @@ namespace CryptoBeholderBot {
                         }
                         _usersCommand.Add(chatId, messageText);
                         break;
+                    case "/get_my_info":
+                        Tracer.CheckUserCoins((int)chatId, botClient, cancellationToken);
+                        break;
                     case "/trace_list":
                         var user = _userContext.Users.FirstOrDefault(p => p.ChatId == chatId);
-                        
-                        if(user?.TrackedCoins != null)
+
+                        if (user.TrackedCoins.Count > 0)
                         { 
                             messageResponse[0] = "You are tracking: \n";
 
@@ -394,7 +387,7 @@ namespace CryptoBeholderBot {
                     case "/trace_settings_list":
                         var user_2 = _userContext.Users.FirstOrDefault(p => p.ChatId == chatId);
 
-                        if(user_2.TrackedCoins != null)
+                        if(user_2.TrackedCoins.Count > 0)
                         {
                             messageResponse[0] = "You are tracking: \n \n";
                             foreach (TrackedCoin tracked in user_2.TrackedCoins)
@@ -407,16 +400,17 @@ namespace CryptoBeholderBot {
                                 {
                                     case TraceMode.OnPriceChageAbsolutely:
                                         messageResponse[0] += "- Tracing mode: on change price absolutely \n"
-                                            + "- Min price:" + tracked.TraceSettings.AbsoluteMin + "\n"
-                                            + "- Max price:" + tracked.TraceSettings.AbsoluteMax + "\n";
+                                            + $"- Min price: { tracked.TraceSettings.AbsoluteMin} \n"
+                                            + $"- Max price: {tracked.TraceSettings.AbsoluteMax} \n";
                                         break;
                                     case TraceMode.OnPriceChageRelatively:
-                                        messageResponse[0] += "-" + "Tracing mode: on change price relatively \n"
-                                            + "- Percentage:" + tracked.TraceSettings.Persent + "\n"
-                                            + "- Time:" + ((DateTime)tracked.TraceSettings.Time).ToString("HH:mm") + "\n";
+                                        messageResponse[0] += "- Tracing mode: on change price relatively \n" +
+                                            $"- Persentage: {tracked.TraceSettings.Persent} \n";
                                         break;
                                     case TraceMode.AfterTime:
-                                        messageResponse[0] += "-" + "Tracing mode: after time \n";
+                                        messageResponse[0] += "- Tracing mode: after time \n"
+                                        +$"- Time: {((DateTime)tracked.TraceSettings.Time).ToString("HH:mm")} \n";
+
                                         break;
                                     default:
                                         break;
@@ -434,6 +428,21 @@ namespace CryptoBeholderBot {
                         messageResponse[0] = "Select coin to edit:";
 
                         _usersCommand.Add(chatId, messageText);
+                        break;
+                    case "/help":
+                        messageResponse[0] = "How to use this bot: \n" +
+                            "To add new coin to track, use '/trace_new'. Then type name of coin. If coin will be found, you will track it with default settings." +
+                            "Default settings are: TraceMode: On price change relatively, persentage: 5% \n \n" +
+                            "Tracing modes: \n" +
+                            "- On price change absolutely: you will get notification, when price will reach max or minimul value you selected." +
+                            " Once it reached max (min), you will get next notification only when price will reach min (max) value. Or you can change your settings. \n" +
+                            "- On price change relatively: you will get motification, when price change per last 24 hours(in %) will reach value you selected." +
+                            "Next time notification will be send in the same case as in On price change absolutely. \n" +
+                            "- After time: you will get notification once per time you selected. \n \n;" +
+                            "To edit trace settings type 'edit_trace' and follow instructions. \n" +
+                            "To delete trace use '/delete_trace' \n" +
+                            "To check list of coins you are tracking, you can use '/trace_list' or '/trace_settings_list'. \n" +
+                            "If you want to get info about coin's prices you are tracking, use '/get_my_info'.";
                         break;
                     default:
                         break;
@@ -474,15 +483,5 @@ namespace CryptoBeholderBot {
             Console.WriteLine(ErrorMessage);
             return Task.CompletedTask;
         }
-
-        //public static async Task SendMessage(int chatId, TelegramBotClient botClient,
-        //    CancellationToken cancellationToken, string text, ReplyKeyboardMarkup? keyboardMarkup = null)
-        //{
-        //    Message sentSecondMessage = await botClient.SendTextMessageAsync(
-        //        chatId: chatId,
-        //        text: text,
-        //        replyMarkup: keyboardMarkup,
-        //        cancellationToken: cancellationToken);
-        //}
     }
 }
