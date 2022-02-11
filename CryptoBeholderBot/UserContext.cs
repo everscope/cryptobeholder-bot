@@ -17,7 +17,7 @@ namespace CryptoBeholderBot
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder
-                .UseSqlServer("Data Source=SCAT\\SQLEXPRESS;Initial Catalog=CryptoBeholder;Integrated Security=True;Encrypt=False");
+                .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

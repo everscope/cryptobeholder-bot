@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CryptoBeholderBot.Migrations
 {
     [DbContext(typeof(UserContext))]
-    [Migration("20220201140432_update")]
-    partial class update
+    [Migration("20220211153758_initial")]
+    partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -79,16 +79,28 @@ namespace CryptoBeholderBot.Migrations
                                         .HasPrecision(18, 3)
                                         .HasColumnType("decimal(18,3)");
 
-                                    b2.Property<decimal?>("AbsoluteMin")
+                                    b2.Property<decimal>("AbsoluteMin")
                                         .HasPrecision(18, 3)
                                         .HasColumnType("decimal(18,3)");
 
                                     b2.Property<bool>("IsNotificationSent")
                                         .HasColumnType("bit");
 
+                                    b2.Property<bool>("MaxIsReached")
+                                        .HasColumnType("bit");
+
+                                    b2.Property<bool>("MinIsReached")
+                                        .HasColumnType("bit");
+
                                     b2.Property<decimal?>("Persent")
-                                        .HasPrecision(3, 2)
-                                        .HasColumnType("decimal(3,2)");
+                                        .HasPrecision(5, 2)
+                                        .HasColumnType("decimal(5,2)");
+
+                                    b2.Property<bool>("PersentNegativeIsReached")
+                                        .HasColumnType("bit");
+
+                                    b2.Property<bool>("PersentPositiveIsReached")
+                                        .HasColumnType("bit");
 
                                     b2.Property<DateTime>("Time")
                                         .HasColumnType("datetime2");

@@ -48,11 +48,17 @@ namespace CryptoBeholderBot.Migrations
                 columns: table => new
                 {
                     TrackedCoinTrackedId = table.Column<int>(type: "int", nullable: false),
-                    AbsoluteMax = table.Column<decimal>(type: "decimal(12,10)", precision: 12, scale: 10, nullable: true),
-                    AbsoluteMin = table.Column<decimal>(type: "decimal(12,10)", precision: 12, scale: 10, nullable: true),
-                    Persent = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: true),
-                    TracingMode = table.Column<int>(type: "int", nullable: true),
-                    Time = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    AbsoluteMax = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: true),
+                    MaxIsReached = table.Column<bool>(type: "bit", nullable: false),
+                    AbsoluteMin = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
+                    MinIsReached = table.Column<bool>(type: "bit", nullable: false),
+                    Persent = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    PersentPositiveIsReached = table.Column<bool>(type: "bit", nullable: false),
+                    PersentNegativeIsReached = table.Column<bool>(type: "bit", nullable: false),
+                    TracingMode = table.Column<int>(type: "int", nullable: false),
+                    Time = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsNotificationSent = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {

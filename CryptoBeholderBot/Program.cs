@@ -25,6 +25,7 @@ namespace CryptoBeholderBot {
             ApiClient.Initialize();
 
             _userContext = new UserContext();
+            _userContext.Database.EnsureCreated();
 
             var botClient = new TelegramBotClient("5231381256:AAFolea3xHyRaPPg-Olf1E_hJIOIOEtWQ3A");
 
