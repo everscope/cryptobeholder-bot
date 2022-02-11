@@ -1,12 +1,9 @@
-﻿using CryptoBeholderBot;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using CoinGecko;
-using System.Globalization;
 
 namespace CryptoBeholderBot {
     public static class Program {
@@ -55,7 +52,7 @@ namespace CryptoBeholderBot {
             cts.Cancel();
         }
 
-        async static Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
 
             if (update.Type != UpdateType.Message)
@@ -127,7 +124,7 @@ namespace CryptoBeholderBot {
                         var user = _userContext.Users.First(p => p.ChatId == chatId);
                         if (user.TrackedCoins.Any(p => p.Coin.ToLower() == messageText.ToLower()))
                         {
-                            messageResponse[0] = "Coin has been succesfuly deleted.";
+                            messageResponse[0] = "Coin has been successfully deleted.";
                             var toRemove = _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                 .First(p => p.Coin.ToLower() == messageText.ToLower());
                             user.TrackedCoins.Remove(toRemove);
@@ -142,8 +139,8 @@ namespace CryptoBeholderBot {
 
                             messageResponse[0] = "Select trace mode. Use /help for more info.";
                             keyboardMarkup[0] = new(new[]{
-                                new KeyboardButton [] { "On price chage absolutely" },
-                                new KeyboardButton [] { "On price chage relatively" },
+                                new KeyboardButton [] { "On price change absolutely" },
+                                new KeyboardButton [] { "On price change relatively" },
                                 new KeyboardButton [] { "After time"}
                             });
                         }
@@ -182,12 +179,12 @@ namespace CryptoBeholderBot {
                     case 0:
                         switch (messageText)
                         {
-                            case "On price chage absolutely":
+                            case "On price change absolutely":
                                 _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                     .First(p => p.Coin == trace).TraceSettings
                                     .TracingMode = TraceMode.OnPriceChageAbsolutely;
                                 break;
-                            case "On price chage relatively":
+                            case "On price change relatively":
                                 _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                     .First(p => p.Coin == trace).TraceSettings
                                     .TracingMode = TraceMode.OnPriceChageRelatively;
@@ -211,12 +208,12 @@ namespace CryptoBeholderBot {
                         switch (traceMode)
                         {
                             case TraceMode.OnPriceChageAbsolutely:
-                                messageResponse[1] = "Select price limits after achiving which you will get notification. " +
+                                messageResponse[1] = "Select price limits after achieving which you will get notification. " +
                                     "Max and min price should look like this: 14000-54000.";
                                 break;
                             case TraceMode.OnPriceChageRelatively:
-                                messageResponse[1] = "Select price limit in percentage after achiving which you will get notification:" +
-                                   "Persentage should look like this: 25,58.";
+                                messageResponse[1] = "Select price limit in percentage after achieving which you will get notification:" +
+                                   "Percentage should look like this: 25,58.";
                                 break;
                             case TraceMode.AfterTime:
                                 messageResponse[1] = "Select time period (in hours) after which you will get notification. " +
@@ -269,7 +266,7 @@ namespace CryptoBeholderBot {
                                     messageResponse[0] = "Your percentage is set.";
                                     _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                             .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
-                                            .AbsoluteMax = Convert.ToDecimal(messageText);
+                                            .Persent = Convert.ToDecimal(messageText);
                                     _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
                                           .First(p => p.Coin.ToLower() == trace.ToLower()).TraceSettings
                                           .PersentNegativeIsReached = false;
@@ -339,12 +336,12 @@ namespace CryptoBeholderBot {
                         Console.WriteLine($"bot started in {chatId}");
 
                         messageResponse[0] =
-                            "Hello! This is very usefull bot for tracking crypto currency. To learn how to use it, print '/help'";
+                            "Hello! This is very useful bot for tracking crypto currency. To learn how to use it, print '/help'";
 
                         if (!_userContext.Users.Any(p => p.ChatId == (int)chatId))
                         {
                             _userContext.Users.Add(new User() { ChatId = (int)chatId});
-                            await _userContext.SaveChangesAsync();
+                            _userContext.SaveChanges();
                         }
                         break;
                     case "/trace_new":
@@ -353,11 +350,11 @@ namespace CryptoBeholderBot {
                         break;
                     case "/delete_trace":
                         messageResponse[0] = "Enter name of coin to stop tracking. " +
-                            "All your settings, that are connected with this coin, will be delleted too.";
+                            "All your settings, that are connected with this coin, will be deleted too.";
                         _usersCommand.Add(chatId, messageText);
                         break;
                     case "/change_vs_currency":
-                        messageResponse[0] = "Here is a list of allowed currencies. Sellect one of them for price displaying: \n";
+                        messageResponse[0] = "Here is a list of allowed currencies. Select one of them for price displaying: \n";
                         foreach (string currency in Tracer.VsCurrencies)
                         {
                             messageResponse[0] += "- " + currency + "\n"; 
@@ -405,7 +402,7 @@ namespace CryptoBeholderBot {
                                         break;
                                     case TraceMode.OnPriceChageRelatively:
                                         messageResponse[0] += "- Tracing mode: on change price relatively \n" +
-                                            $"- Persentage: {tracked.TraceSettings.Persent} \n";
+                                            $"- Percentage: {tracked.TraceSettings.Persent} \n";
                                         break;
                                     case TraceMode.AfterTime:
                                         messageResponse[0] += "- Tracing mode: after time \n"
@@ -432,11 +429,11 @@ namespace CryptoBeholderBot {
                     case "/help":
                         messageResponse[0] = "How to use this bot: \n" +
                             "To add new coin to track, use '/trace_new'. Then type name of coin. If coin will be found, you will track it with default settings." +
-                            "Default settings are: TraceMode: On price change relatively, persentage: 5% \n \n" +
+                            "Default settings are: TraceMode: On price change relatively, percentage: 5% \n \n" +
                             "Tracing modes: \n" +
-                            "- On price change absolutely: you will get notification, when price will reach max or minimul value you selected." +
+                            "- On price change absolutely: you will get notification, when price will reach max or minimum value you selected." +
                             " Once it reached max (min), you will get next notification only when price will reach min (max) value. Or you can change your settings. \n" +
-                            "- On price change relatively: you will get motification, when price change per last 24 hours(in %) will reach value you selected." +
+                            "- On price change relatively: you will get notification, when price change per last 24 hours(in %) will reach value you selected." +
                             "Next time notification will be send in the same case as in On price change absolutely. \n" +
                             "- After time: you will get notification once per time you selected. \n \n;" +
                             "To edit trace settings type 'edit_trace' and follow instructions. \n" +

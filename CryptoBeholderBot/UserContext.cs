@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBeholderBot
 {
-    public class UserContext:DbContext
+    internal class UserContext:DbContext
     {
 
         public DbSet<User> Users { get; set; }
