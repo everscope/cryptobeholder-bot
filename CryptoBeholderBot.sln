@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBeholderBot", "CryptoBeholderBot\CryptoBeholderBot.csproj", "{579AB94F-3784-4AD7-B5AE-5931A6DF45CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoBeholderBot", "CryptoBeholderBot\CryptoBeholderBot.csproj", "{579AB94F-3784-4AD7-B5AE-5931A6DF45CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBeholder.Lib", "CryptoBeholder.Lib\CryptoBeholder.Lib.csproj", "{BC5678DC-3BC7-430B-A3CA-7CADC809599D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBeholder.DAL", "CryptoBeholder.DAL\CryptoBeholder.DAL.csproj", "{329DA34F-5306-450C-AC4D-C1505D846BAE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{579AB94F-3784-4AD7-B5AE-5931A6DF45CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{579AB94F-3784-4AD7-B5AE-5931A6DF45CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{579AB94F-3784-4AD7-B5AE-5931A6DF45CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC5678DC-3BC7-430B-A3CA-7CADC809599D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC5678DC-3BC7-430B-A3CA-7CADC809599D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC5678DC-3BC7-430B-A3CA-7CADC809599D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC5678DC-3BC7-430B-A3CA-7CADC809599D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{329DA34F-5306-450C-AC4D-C1505D846BAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{329DA34F-5306-450C-AC4D-C1505D846BAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{329DA34F-5306-450C-AC4D-C1505D846BAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{329DA34F-5306-450C-AC4D-C1505D846BAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

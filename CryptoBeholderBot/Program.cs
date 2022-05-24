@@ -1,4 +1,5 @@
-﻿using Telegram.Bot;
+﻿using CryptoBeholder.Lib;
+using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
@@ -74,7 +75,7 @@ namespace CryptoBeholderBot {
             string?[] messageResponse = new string [2];
             ReplyKeyboardMarkup? [] keyboardMarkup = new ReplyKeyboardMarkup [2];
 
-            if(messageText == "/escape")
+            if(messageText == EscapeCommand.Escape)
             {
                 if(_usersCommand.ContainsKey(chatId))
                 {
@@ -91,79 +92,82 @@ namespace CryptoBeholderBot {
                     _traceStage.Remove(chatId);
                 }
 
-                messageResponse[0] = "Command aborted, no active commands now";
+                messageResponse[0] = EscapeCommand.EscapeResponce;
             }
 
             if (_usersCommand.ContainsKey(chatId))
             {
-                switch (_usersCommand[chatId])
+                if (_usersCommand[chatId] == StartCommands.TraceNew)
                 {
-                    case "/trace_new":
-                        if (Tracer.CoinsList.Any(p => p.Name.ToLower() == messageText.ToLower()))
+                    if (Tracer.CoinsList.Any(p => p.Name.ToLower() == messageText.ToLower()))
+                    {
+                        if (_userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                            .Any(p => p.Coin.ToLower() == messageText.ToLower()))
                         {
-                            if (_userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                .Any(p => p.Coin.ToLower() == messageText.ToLower()))
-                            {
-                                messageResponse[0] = "You are already tracking this coin.";
-                            }
-                            else
-                            {
-                                messageResponse[0] = $"You are tracking {messageText} with default settings.";
-
-                                _userContext.Users.First(p => p.ChatId == chatId)
-                                    .TrackedCoins.Add(new TrackedCoin() { Coin = Tracer.CoinsList.First(
-                                        p => p.Name.ToLower() == messageText.ToLower()).Name});
-                            }
-
+                            messageResponse[0] = "You are already tracking this coin.";
                         }
                         else
                         {
-                            messageResponse[0] = $"There is no such coin.";
-                        }
-                        break;
-                    case "/delete_trace":
-                        var user = _userContext.Users.First(p => p.ChatId == chatId);
-                        if (user.TrackedCoins.Any(p => p.Coin.ToLower() == messageText.ToLower()))
-                        {
-                            messageResponse[0] = "Coin has been successfully deleted.";
-                            var toRemove = _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
-                                .First(p => p.Coin.ToLower() == messageText.ToLower());
-                            user.TrackedCoins.Remove(toRemove);
-                        }
-                        break;
-                    case "/edit_trace":
-                        if (_userContext.Users.First(p => p.ChatId == chatId).TrackedCoins.Any(p => p.Coin.ToLower() == messageText.ToLower()))
-                        {
-                            _traces.Add(chatId, _userContext.Users.First(p => p.ChatId == chatId)
-                                                .TrackedCoins.First(p => p.Coin.ToLower() == messageText.ToLower()).Coin);
-                            _traceStage.Add(chatId, 0);
+                            messageResponse[0] = $"You are tracking {messageText} with default settings.";
 
-                            messageResponse[0] = "Select trace mode. Use /help for more info.";
-                            keyboardMarkup[0] = new(new[]{
+                            _userContext.Users.First(p => p.ChatId == chatId)
+                                .TrackedCoins.Add(new TrackedCoin()
+                                {
+                                    Coin = Tracer.CoinsList.First(
+                                    p => p.Name.ToLower() == messageText.ToLower()).Name
+                                });
+                        }
+
+                    }
+                    else
+                    {
+                        messageResponse[0] = $"There is no such coin.";
+                    }
+                }
+                else if (_usersCommand[chatId] == StartCommands.DeleteTrace)
+                {
+                    var user = _userContext.Users.First(p => p.ChatId == chatId);
+                    if (user.TrackedCoins.Any(p => p.Coin.ToLower() == messageText.ToLower()))
+                    {
+                        messageResponse[0] = "Coin has been successfully deleted.";
+                        var toRemove = _userContext.Users.First(p => p.ChatId == chatId).TrackedCoins
+                            .First(p => p.Coin.ToLower() == messageText.ToLower());
+                        user.TrackedCoins.Remove(toRemove);
+                    }
+                }
+                else if (_usersCommand[chatId] == StartCommands.EditTrace)
+                {
+                    if (_userContext.Users.First(p => p.ChatId == chatId).TrackedCoins.Any(p => p.Coin.ToLower() == messageText.ToLower()))
+                    {
+                        _traces.Add(chatId, _userContext.Users.First(p => p.ChatId == chatId)
+                                            .TrackedCoins.First(p => p.Coin.ToLower() == messageText.ToLower()).Coin);
+                        _traceStage.Add(chatId, 0);
+
+                        messageResponse[0] = "Select trace mode. Use /help for more info.";
+                        keyboardMarkup[0] = new(new[]{
                                 new KeyboardButton [] { "On price change absolutely" },
                                 new KeyboardButton [] { "On price change relatively" },
                                 new KeyboardButton [] { "After time"}
                             });
-                        }
-                        else
-                        {
-                            messageResponse[0] = "You are not tracking such coin.";
-                        }
-                        break;
-                    case "/change_vs_currency":
-                        if (Tracer.VsCurrencies.Contains(messageText.ToLower()))
-                        {
-                            messageResponse[0] = $"Your vs currency has been changed to {messageText}.";
-                            _userContext.Users.First(p => p.ChatId == chatId).VsCurrency = messageText.ToLower();
-                        }
-                        else
-                        {
-                            messageResponse[0] = "There is no such vs currency. Check if it's written correctly.";
-                        }
-                        break;
-                    default:
-                        break;
+                    }
+                    else
+                    {
+                        messageResponse[0] = "You are not tracking such coin.";
+                    }
                 }
+                else if (_usersCommand[chatId] == StartCommands.ChangeVsCurrency)
+                {
+                    if (Tracer.VsCurrencies.Contains(messageText.ToLower()))
+                    {
+                        messageResponse[0] = $"Your vs currency has been changed to {messageText}.";
+                        _userContext.Users.First(p => p.ChatId == chatId).VsCurrency = messageText.ToLower();
+                    }
+                    else
+                    {
+                        messageResponse[0] = "There is no such vs currency. Check if it's written correctly.";
+                    }
+                }
+
                 _userContext.SaveChanges();
                 _usersCommand.Remove(chatId);
             }
@@ -331,104 +335,111 @@ namespace CryptoBeholderBot {
             }
             else
             {
-                switch (messageText)
+                if (messageText == StartCommands.Start)
                 {
-                    case "/start":
-                        Console.WriteLine($"bot started in {chatId}");
+                    Console.WriteLine($"bot started in {chatId}");
 
-                        messageResponse[0] =
-                            "Hello! This is very useful bot for tracking crypto currency. To learn how to use it, print '/help'";
+                    messageResponse[0] =
+                        "Hello! This is very useful bot for tracking crypto currency. To learn how to use it, print '/help'";
 
-                        if (!_userContext.Users.Any(p => p.ChatId == (int)chatId))
+                    if (!_userContext.Users.Any(p => p.ChatId == (int)chatId))
+                    {
+                        _userContext.Users.Add(new User() { ChatId = (int)chatId });
+                        _userContext.SaveChanges();
+                    }
+                }
+                else if (messageText == StartCommands.TraceNew)
+                {
+                    messageResponse[0] = "Enter coin's name:";
+                    _usersCommand.Add(chatId, messageText);
+                }
+                else if (messageText == StartCommands.DeleteTrace)
+                {
+                    messageResponse[0] = "Enter name of coin to stop tracking. " +
+                           "All your settings, that are connected with this coin, will be deleted too.";
+                    _usersCommand.Add(chatId, messageText);
+                }
+                else if (messageText == StartCommands.ChangeVsCurrency)
+                {
+                    messageResponse[0] = "Here is a list of allowed currencies. Select one of them for price displaying: \n";
+                    foreach (string currency in Tracer.VsCurrencies)
+                    {
+                        messageResponse[0] += "- " + currency + "\n";
+                    }
+                    _usersCommand.Add(chatId, messageText);
+                }
+                else if (messageText == StartCommands.GetMyInfo)
+                {
+                    Tracer.CheckUserCoins((int)chatId, botClient, cancellationToken);
+                }
+                else if (messageText == StartCommands.TraceList)
+                {
+                    var user = _userContext.Users.FirstOrDefault(p => p.ChatId == chatId);
+
+                    if (user.TrackedCoins.Count > 0)
+                    {
+                        messageResponse[0] = "You are tracking: \n";
+
+                        foreach (TrackedCoin tracked in user.TrackedCoins)
                         {
-                            _userContext.Users.Add(new User() { ChatId = (int)chatId});
-                            _userContext.SaveChanges();
+                            messageResponse[0] += "- " + tracked.Coin + "\n";
                         }
-                        break;
-                    case "/trace_new":
-                        messageResponse[0] = "Enter coin's name:";
-                        _usersCommand.Add(chatId, messageText);
-                        break;
-                    case "/delete_trace":
-                        messageResponse[0] = "Enter name of coin to stop tracking. " +
-                            "All your settings, that are connected with this coin, will be deleted too.";
-                        _usersCommand.Add(chatId, messageText);
-                        break;
-                    case "/change_vs_currency":
-                        messageResponse[0] = "Here is a list of allowed currencies. Select one of them for price displaying: \n";
-                        foreach (string currency in Tracer.VsCurrencies)
+                    }
+                    else
+                    {
+                        messageResponse[0] = "You are not tracking anything yet.";
+                    }
+                }
+                else if (messageText == StartCommands.TraceSettingsList)
+                {
+                    var user_2 = _userContext.Users.FirstOrDefault(p => p.ChatId == chatId);
+
+                    if (user_2.TrackedCoins.Count > 0)
+                    {
+                        messageResponse[0] = "You are tracking: \n \n";
+                        foreach (TrackedCoin tracked in user_2.TrackedCoins)
                         {
-                            messageResponse[0] += "- " + currency + "\n"; 
-                        }
-                        _usersCommand.Add(chatId, messageText);
-                        break;
-                    case "/get_my_info":
-                        Tracer.CheckUserCoins((int)chatId, botClient, cancellationToken);
-                        break;
-                    case "/trace_list":
-                        var user = _userContext.Users.FirstOrDefault(p => p.ChatId == chatId);
+                            var traceMode = tracked.TraceSettings.TracingMode;
 
-                        if (user.TrackedCoins.Count > 0)
-                        { 
-                            messageResponse[0] = "You are tracking: \n";
+                            messageResponse[0] += tracked.Coin + ": \n";
 
-                            foreach (TrackedCoin tracked in user.TrackedCoins)
+                            switch (traceMode)
                             {
-                                messageResponse[0] += "- " + tracked.Coin + "\n";
+                                case TraceMode.OnPriceChageAbsolutely:
+                                    messageResponse[0] += "- Tracing mode: on change price absolutely \n"
+                                        + $"- Min price: { tracked.TraceSettings.AbsoluteMin} \n"
+                                        + $"- Max price: {tracked.TraceSettings.AbsoluteMax} \n";
+                                    break;
+                                case TraceMode.OnPriceChageRelatively:
+                                    messageResponse[0] += "- Tracing mode: on change price relatively \n" +
+                                        $"- Percentage: {tracked.TraceSettings.Persent} \n";
+                                    break;
+                                case TraceMode.AfterTime:
+                                    messageResponse[0] += "- Tracing mode: after time \n"
+                                    + $"- Time: {((DateTime)tracked.TraceSettings.Time).ToString("HH:mm")} \n";
+
+                                    break;
+                                default:
+                                    break;
                             }
+
+                            messageResponse[0] += "\n \n";
                         }
-                        else
-                        {
-                            messageResponse[0] = "You are not tracking anything yet.";
-                        }
-                        break;
-                    case "/trace_settings_list":
-                        var user_2 = _userContext.Users.FirstOrDefault(p => p.ChatId == chatId);
+                    }
+                    else
+                    {
+                        messageResponse[0] = "You are not tracking anything yet.";
+                    }
+                }
+                else if (messageText == StartCommands.EditTrace)
+                {
+                    messageResponse[0] = "Select coin to edit:";
 
-                        if(user_2.TrackedCoins.Count > 0)
-                        {
-                            messageResponse[0] = "You are tracking: \n \n";
-                            foreach (TrackedCoin tracked in user_2.TrackedCoins)
-                            {
-                                var traceMode = tracked.TraceSettings.TracingMode;
-
-                                messageResponse[0] += tracked.Coin + ": \n";
-
-                                switch (traceMode)
-                                {
-                                    case TraceMode.OnPriceChageAbsolutely:
-                                        messageResponse[0] += "- Tracing mode: on change price absolutely \n"
-                                            + $"- Min price: { tracked.TraceSettings.AbsoluteMin} \n"
-                                            + $"- Max price: {tracked.TraceSettings.AbsoluteMax} \n";
-                                        break;
-                                    case TraceMode.OnPriceChageRelatively:
-                                        messageResponse[0] += "- Tracing mode: on change price relatively \n" +
-                                            $"- Percentage: {tracked.TraceSettings.Persent} \n";
-                                        break;
-                                    case TraceMode.AfterTime:
-                                        messageResponse[0] += "- Tracing mode: after time \n"
-                                        +$"- Time: {((DateTime)tracked.TraceSettings.Time).ToString("HH:mm")} \n";
-
-                                        break;
-                                    default:
-                                        break;
-                                }
-
-                                messageResponse[0] += "\n \n";
-                            }
-                        }
-                        else
-                        {
-                            messageResponse[0] = "You are not tracking anything yet.";
-                        }
-                        break;
-                    case "/edit_trace":
-                        messageResponse[0] = "Select coin to edit:";
-
-                        _usersCommand.Add(chatId, messageText);
-                        break;
-                    case "/help":
-                        messageResponse[0] = "How to use this bot: \n" +
+                    _usersCommand.Add(chatId, messageText);
+                }
+                else if (messageText == StartCommands.Help)
+                {
+                    messageResponse[0] = "How to use this bot: \n" +
                             "To add new coin to track, use '/trace_new'. Then type name of coin. If coin will be found, you will track it with default settings." +
                             "Default settings are: TraceMode: On price change relatively, percentage: 5% \n \n" +
                             "Tracing modes: \n" +
@@ -441,9 +452,6 @@ namespace CryptoBeholderBot {
                             "To delete trace use '/delete_trace' \n" +
                             "To check list of coins you are tracking, you can use '/trace_list' or '/trace_settings_list'. \n" +
                             "If you want to get info about coin's prices you are tracking, use '/get_my_info'.";
-                        break;
-                    default:
-                        break;
                 }
             }
 
