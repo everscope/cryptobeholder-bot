@@ -3,7 +3,7 @@ using Telegram.Bot.Types;
 
 namespace CryptoBeholderBot
 {
-    internal class Tracer
+    public class Tracer
     {
         public static CoinGecko.Entities.Response.Coins.CoinList[] CoinsList { get; private set; }
         public static List<CoinGecko.Entities.Response.Coins.CoinMarkets[]> CoinsData { get; private set; } =

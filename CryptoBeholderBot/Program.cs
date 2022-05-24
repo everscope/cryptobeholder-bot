@@ -15,6 +15,7 @@ namespace CryptoBeholderBot {
         private static Dictionary<long, int> _traceStage = new Dictionary<long, int>();
 
         private static UserContext _userContext;
+        private static Messenger _messenger;
 
         public static void Main(string[] args)
         {
@@ -27,6 +28,8 @@ namespace CryptoBeholderBot {
 
             _userContext = new UserContext();
             _userContext.Database.EnsureCreated();
+
+            _messenger = new Messenger();
 
             var botClient = new TelegramBotClient("5231381256:AAFolea3xHyRaPPg-Olf1E_hJIOIOEtWQ3A");
 
@@ -57,12 +60,8 @@ namespace CryptoBeholderBot {
         static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
 
-            if (update.Type != UpdateType.Message)
-            {
-                return;
-            }
-
-            if (update.Message!.Type != MessageType.Text)
+            if (update.Type != UpdateType.Message
+                || update.Message!.Type != MessageType.Text)
             {
                 return;
             }
@@ -77,20 +76,7 @@ namespace CryptoBeholderBot {
 
             if(messageText == EscapeCommand.Escape)
             {
-                if(_usersCommand.ContainsKey(chatId))
-                {
-                    _usersCommand.Remove(chatId);
-                }
-
-                if (_traces.ContainsKey(chatId))
-                {
-                    _traces.Remove(chatId);
-                }
-
-                if (_traceStage.ContainsKey(chatId))
-                {
-                    _traceStage.Remove(chatId);
-                }
+                _messenger.Escape(chatId);
 
                 messageResponse[0] = EscapeCommand.EscapeResponce;
             }
