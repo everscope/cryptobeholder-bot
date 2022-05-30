@@ -46,6 +46,15 @@ namespace CryptoBeholder.DAL
             _context.SaveChanges();
         }
 
+        public void RemoveTrackedCoin(long id, string coinName)
+        {
+            var user = _context.Users.First(p => p.ChatId == id);
+            var coin = user.TrackedCoins.First(p => p.Coin.ToLower() == coinName.ToLower());
+            user.TrackedCoins.Remove(coin);
+
+            _context.SaveChanges();
+        }
+
         public bool IsCoinTracked(long id, string coinName)
         {
             return _context.Users.First(p => p.ChatId == id).TrackedCoins.

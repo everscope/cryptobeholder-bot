@@ -13,6 +13,7 @@ namespace CryptoBeholder.Lib.Interfaces
         public void AddUser(long chatId);
         public List<TrackedCoin> GetTrackedCoins(long chatId);
         public void AddTracketCoin(long id, string coinName);
+        public void RemoveTrackedCoin(long id, string coinName);
         public bool IsCoinTracked(long id, string coinName);
         public string GetCoinName(long id, string coinName);
         public void ChangeVsCurrency(long id, string vsCurrency);

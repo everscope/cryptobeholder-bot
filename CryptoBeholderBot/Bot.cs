@@ -91,7 +91,6 @@ namespace CryptoBeholderBot
             if (_usersCommand.ContainsKey(chatId))
             {
                 responce = HandleSecondStageCommand(messageText, chatId);
-                
             }
             else if (_traces.ContainsKey(chatId) && _traceStage.ContainsKey(chatId))
             {
@@ -108,10 +107,10 @@ namespace CryptoBeholderBot
             if (messageResponse[0] != null)
             {
                 Message sentMessage = await botClient.SendTextMessageAsync(
-                        chatId: chatId,
-                        text: messageResponse[0],
-                        replyMarkup: keyboardMarkup[0] == null ? new ReplyKeyboardRemove() : keyboardMarkup[0],
-                        cancellationToken: cancellationToken);
+                    chatId: chatId,
+                    text: messageResponse[0],
+                    replyMarkup: keyboardMarkup[0] == null ? new ReplyKeyboardRemove() : keyboardMarkup[0],
+                    cancellationToken: cancellationToken);
                 if (messageResponse[1] != null)
                 {
                     Message sentSecondMessage = await botClient.SendTextMessageAsync(
@@ -155,6 +154,7 @@ namespace CryptoBeholderBot
 
             return new object[] { messageResponse, keyboardMarkup };
         }
+
         private object[] HandleEditTraceSecondStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -185,6 +185,7 @@ namespace CryptoBeholderBot
             } 
             return new object[] { messageResponse, keyboardMarkup };
         }
+
         private object[] HandleFirstStageCommand(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -230,6 +231,7 @@ namespace CryptoBeholderBot
             return new object[] { messageResponse, keyboardMarkup };
         }
 
+
         private string[] TraceNewSecondStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -251,12 +253,22 @@ namespace CryptoBeholderBot
             }
             return messageResponse;
         }
+
         private string[] DeleteTraceSecondStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
-            messageResponse[0] = SecondStageCommandsResponces.DeleteTrace;
+            try
+            {
+                _databaseReader.RemoveTrackedCoin(chatId, messageText);
+                messageResponse[0] = SecondStageCommandsResponces.DeleteTraceSuccesful;
+            }
+            catch
+            {
+                messageResponse[0] = SecondStageCommandsResponces.DeleteTraceNotFound;
+            }
             return messageResponse;
         }
+
         private string[] ChangeVsCurrencySecondStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -273,6 +285,7 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private object[] EditTraceSecondStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -288,7 +301,7 @@ namespace CryptoBeholderBot
                                 new KeyboardButton [] { "On price change absolutely" },
                                 new KeyboardButton [] { "On price change relatively" },
                                 new KeyboardButton [] { "After time"}
-                            });
+                });
             }
             else
             {
@@ -297,6 +310,7 @@ namespace CryptoBeholderBot
 
             return new object[] { messageResponse, keyboardMarkup };
         }
+
         private string[] SetTraceMode(string trace, TraceMode traceMode, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -339,7 +353,6 @@ namespace CryptoBeholderBot
 
                 _databaseReader.SetMinValue(chatId, trace, min);
                 _databaseReader.SetMaxValue(chatId, trace, max);
-
             }
             catch
             {
@@ -350,6 +363,7 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private string[] SetOnPriceChangeRelativelySettings(string messageText, string trace, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -363,13 +377,13 @@ namespace CryptoBeholderBot
             catch
             {
                 messageResponse[0] = TraceSecondStageResponse.SomethingIsWrongPercentage;
-
             }
             _traceStage.Remove(chatId);
             _traces.Remove(chatId);
 
             return messageResponse;
         }
+
         private string[] SetAfterTimeSettings(string messageText, string trace, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -383,7 +397,6 @@ namespace CryptoBeholderBot
 
                 messageResponse[0] = TraceSecondStageResponse.TimePeriodSet;
                 messageResponse[1] = TraceSecondStageResponse.AllSettingsSet;
-
             }
             catch
             {
@@ -395,17 +408,18 @@ namespace CryptoBeholderBot
             return messageResponse;
         }
 
+
         private string[] Start(long chatId)
         {
             string[] messageResponse = new string[2];
             Console.WriteLine($"bot started in {chatId}");
 
             messageResponse[0] = FirstStageCommandsResponces.StartResponce;
-
             _databaseReader.AddUser(chatId);
 
             return messageResponse;
         }
+
         private string[] TraceNewFirstStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -415,6 +429,7 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private string[] DeleteTraceFirstStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -424,6 +439,7 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private string[] ChangeVsCurrencyFirstStage(string messageText, long chatId)
         {
             string[] messageResponse = new string[2];
@@ -440,11 +456,13 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private void GetMyInfo(long chatId)
         {
             _tracer.CheckUserCoins((int)chatId, _botClient, _cancellationToken)
                 .GetAwaiter().GetResult();
         }
+
         private string[] GetTraceList(string messageText, long chatId)
         {
             string [] messageResponse = new string [2];
@@ -469,6 +487,7 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private string[] GetTraceListWithSettings(string messageText, long chatId)
         {
             string [] messageResponse = new string [2];
@@ -515,6 +534,7 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private string[] EditTraceFirstStage(string messageText, long chatId)
         {
             string [] messageResponse = new string[2];
@@ -524,12 +544,14 @@ namespace CryptoBeholderBot
 
             return messageResponse;
         }
+
         private string[] GetHelp()
         {
             string[] messageResponse = new string[2];
             messageResponse[0] = FirstStageCommandsResponces.HelpResponce;
             return messageResponse;
         }
+
 
         private Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
