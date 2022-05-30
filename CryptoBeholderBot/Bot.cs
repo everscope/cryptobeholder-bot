@@ -2,11 +2,11 @@
 using CryptoBeholder.Lib.Interfaces;
 using System.Text;
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Exceptions;
 
 namespace CryptoBeholderBot
 {
@@ -415,15 +415,14 @@ namespace CryptoBeholderBot
 
         private Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            //var ErrorMessage = exception switch
-            //{
-            //    ApiRequestException apiRequestException
-            //        => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-            //    _ => exception.ToString()
-            //};
-            //Console.WriteLine(ErrorMessage);
-            //return Task.CompletedTask;
-            throw exception;
+            var ErrorMessage = exception switch
+            {
+                ApiRequestException apiRequestException
+                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                _ => exception.ToString()
+            };
+            Console.WriteLine(ErrorMessage);
+            return Task.CompletedTask;
         }
 
         private void Escape(long chatId)
