@@ -1,15 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoBeholderBot
 {
-    internal class UserContext:DbContext
+    public class UserContext:DbContext
     {
-
         public DbSet<User> Users { get; set; }
         public DbSet<TrackedCoin> TrackedCoins { get; set; }
         public DbSet<TraceSettings> TracesSettings { get; set; }
@@ -27,8 +21,6 @@ namespace CryptoBeholderBot
                 {
                     b.OwnsOne(b => b.TraceSettings);;
                 });
-
-            base.OnModelCreating(modelBuilder);
 
         }
                 

@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoBeholderBot", "CryptoBeholderBot\CryptoBeholderBot.csproj", "{579AB94F-3784-4AD7-B5AE-5931A6DF45CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBeholder.Lib", "CryptoBeholder.Lib\CryptoBeholder.Lib.csproj", "{BC5678DC-3BC7-430B-A3CA-7CADC809599D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoBeholder.Lib", "CryptoBeholder.Lib\CryptoBeholder.Lib.csproj", "{BC5678DC-3BC7-430B-A3CA-7CADC809599D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBeholder.DAL", "CryptoBeholder.DAL\CryptoBeholder.DAL.csproj", "{329DA34F-5306-450C-AC4D-C1505D846BAE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoBeholder.DAL", "CryptoBeholder.DAL\CryptoBeholder.DAL.csproj", "{329DA34F-5306-450C-AC4D-C1505D846BAE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

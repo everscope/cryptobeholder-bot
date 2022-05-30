@@ -14,7 +14,7 @@ namespace CryptoBeholderBot
     //Persent - 5
     //Time - 1 hour
     [Owned]
-    internal class TraceSettings
+    public class TraceSettings
     {
         [Precision(18, 3)]
         public decimal? AbsoluteMax { get; set; }
