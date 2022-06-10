@@ -11,7 +11,7 @@ namespace CryptoBeholderBot
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder
-                .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True");
+                .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Database=TelegramBotDatabase;Integrated Security=True");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
